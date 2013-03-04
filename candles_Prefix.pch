@@ -1,0 +1,19 @@
+//
+// Prefix header for all source files of the 'Candles' target in the 'Candles' project
+//
+
+//#define _developer_version
+
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+    #import <UIKit/UIKit.h>
+#import "Common.h"
+#import "ImageUtils.h"
+#import "Utils.h"
+
+#define yiPad UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad
+#define kAdSecret (yiPad ? @"3def184ad8f4755ff269862ea77393dd" : @"069059b7ef840f0c74a814ec9237b6ec")
+//#define kAdSecret @"da4fb5c6e93e74d3df8527599fa62642"
+
+#endif

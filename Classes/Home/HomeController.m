@@ -1,0 +1,158 @@
+    //
+//  HomeController.m
+//  candles
+//
+//  Created by Sergey Kopanev on 3/11/11.
+//  Copyright 2011 Knees & Toads. All rights reserved.
+//
+
+#import "HomeController.h"
+#import "CandlesController.h"
+
+@implementation HomeController
+
+// The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+		if ([Utils runningUnderiPad]) {
+			homeView = [[HomeView alloc] initWithFrame:CGRectMake(0, 0, 768, 1024)];
+		} else {
+			homeView = [[HomeView alloc] initWithFrame:CGRectMake(0, 0, 320, 480)];
+		}			
+		self.view = homeView;
+		[homeView release];
+
+		NSString *sP = [NSString stringWithFormat:@"%@/sounds/stinger.wav", [[NSBundle mainBundle] bundlePath]];
+		backgroundTrack = [[AVAudioPlayer alloc] initWithContentsOfURL: [NSURL fileURLWithPath: sP]
+																 error: nil];
+		backgroundTrack.numberOfLoops = 0;
+		[backgroundTrack prepareToPlay];
+		[backgroundTrack play];
+		[NSTimer scheduledTimerWithTimeInterval:2.5 target:self selector:@selector(playTrack) userInfo:nil repeats:NO];
+//		NSLog(@"timer tick");
+		c = nil;
+		
+		indikator = nil;
+		control = nil;
+    }
+    return self;
+}
+
+- (void) playTrack {
+//	NSLog(@"timer");
+	homeView.image = [ImageUtils loadNativeImage:@"mainpage.png"];
+	[homeView.c addTarget:self action:@selector(runCandleBuilder) forControlEvents:UIControlEventTouchDown];
+	if (backgroundTrack) [backgroundTrack release];
+	NSString *sP = [NSString stringWithFormat:@"%@/sounds/track.mp3", [[NSBundle mainBundle] bundlePath]];
+	backgroundTrack = [[AVAudioPlayer alloc] initWithContentsOfURL: [NSURL fileURLWithPath: sP]
+																  error: nil];
+	backgroundTrack.numberOfLoops = -1;
+	[backgroundTrack prepareToPlay];
+	[backgroundTrack play];
+}
+
+
+- (void) runCandleBuilder {
+	if (!c) {
+		if (!indikator) {
+			control = [[UIControl alloc] initWithFrame:[homeView bounds]];
+			control.userInteractionEnabled = YES;
+			[homeView addSubview:control];
+			control.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
+			[control release];
+			indikator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+			[homeView addSubview:indikator];
+			[indikator startAnimating];
+			[indikator release];
+			
+			
+			int s;
+			if ([Utils runningUnderiPad]) {
+				s = 32;
+				indikator.frame = CGRectMake(768/2-s/2, 1024/2-s/2, s, s);
+			} else {
+				s = 32;
+				indikator.frame = CGRectMake(320/2 - s/2, 480/2-s/2, s, s);
+			}
+			indikator.alpha = 0.9;
+			[UIView beginAnimations:nil context:0];
+			[UIView setAnimationDuration:0.1];
+			[UIView setAnimationDelegate:self];
+			[UIView setAnimationDidStopSelector:@selector(createCandles)];
+			indikator.alpha = 1.0;
+			[UIView commitAnimations];
+			
+		}
+		
+		
+	} else {
+		NSDictionary *d = [NSMutableDictionary dictionaryWithObjectsAndKeys: @"3-wick", kJarNameKey, @"ya", @"loadFromDict", nil];
+		NSNotification *n = [NSNotification notificationWithName:@"none" object:d];
+		[c loadCandleAtPath:n];
+	}
+	[self.navigationController pushViewController:c animated:YES];
+}
+
+- (void) createCandles {
+	c = [[CandlesController alloc] init];
+	c.backgroundTrack = backgroundTrack;
+	[control removeFromSuperview];
+	[indikator removeFromSuperview];
+	control = nil;
+	indikator = nil;
+	[self.navigationController pushViewController:c animated:YES];
+}
+
+
+/*
+// Implement loadView to create a view hierarchy programmatically, without using a nib.
+- (void)loadView {
+}
+*/
+
+/*
+// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
+- (void)viewDidLoad {
+    [super viewDidLoad];
+}
+*/
+
+/*
+// Override to allow orientations other than the default portrait orientation.
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    // Return YES for supported orientations.
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+*/
+
+- (void) afterD {
+    [ad showAdsOnViewController:self];
+}
+
+-(void) viewDidAppear:(BOOL)animated {
+    int y = (yiPad ? 66 : 50);
+    ad = [[MGAd alloc] initForBannerWithSecret:kAdSecret origin:CGPointMake(0, self.view.frame.size.height-y) orientation:UIInterfaceOrientationPortrait];
+    [self performSelector:@selector(afterD) withObject:nil afterDelay:.5];
+}
+
+-(void) viewDidDisappear:(BOOL)animated {
+    [ad stopAds]; [ad release];
+}
+
+- (void)viewDidUnload {
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+}
+
+
+- (void)dealloc {
+	[backgroundTrack release];
+	[c release];
+    [super dealloc];
+}
+
+
+@end
